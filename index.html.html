@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ko">
+ <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260717-05-8209e4e"}');</script><script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>물의 가열 곡선 관찰 앱</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/e3937a0574eb2d69.data_sdk.js" integrity="sha512-xbp/ACqEQy1aDxYMtXTrR3y5MUbzxuggRR/9sD48Gl4VhLMMCiAHsxMaFV6DTdeBpR6ymF+t2zhPKYkWM3+Jfw=="></script>
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    canvas { width: 100%; height: 250px; }
+    .lab-setup { position: relative; width: 190px; height: 170px; margin: 12px auto 8px; }
+    .hotplate { position: absolute; left: 22px; right: 22px; bottom: 8px; height: 22px; border-radius: 8px 8px 5px 5px; background: linear-gradient(#4b5563, #1f2937); box-shadow: 0 7px 0 #111827, 0 10px 16px rgba(15,23,42,.25); }
+    .hotplate::after { content: ''; position: absolute; left: 28px; right: 28px; top: 5px; height: 6px; border-radius: 999px; background: #ef4444; box-shadow: 0 0 10px #fb7185; transition: opacity .25s, box-shadow .25s; }
+    .hotplate.off::after { opacity: 0; box-shadow: none; }
+    .beaker { position: absolute; left: 54px; top: 10px; width: 82px; height: 118px; border: 4px solid #64748b; border-top: 0; border-radius: 4px 4px 18px 18px; background: rgba(219,234,254,.32); clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%); overflow: hidden; }
+    .ice-inside { position: absolute; z-index: 2; left: 18px; right: 18px; bottom: 8px; height: 50px; font-size: 22px; line-height: 1; transform-origin: center bottom; transition: opacity .2s, transform .25s; }
+    .ice-inside span { position: absolute; display: block; }
+    .ice-inside span:nth-child(1) { left: 0; bottom: 3px; transform: rotate(-8deg); }
+    .ice-inside span:nth-child(2) { left: 23px; bottom: 0; transform: rotate(7deg); }
+    .ice-inside span:nth-child(3) { left: 12px; bottom: 25px; transform: rotate(4deg); }
+    .beaker::before { content: ''; position: absolute; left: -8px; right: -8px; top: 0; height: 8px; border: 4px solid #64748b; border-radius: 5px; background: rgba(255,255,255,.55); }
+    .liquid { position: absolute; left: 7px; right: 7px; bottom: 6px; height: 58%; opacity: 0; border-radius: 3px 3px 14px 14px; background: linear-gradient(#bfdbfe, #60a5fa); transition: height .25s, opacity .25s; }
+    .liquid::after { content: ''; position: absolute; left: 10px; right: 10px; top: 7px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.65); }
+    .steam { position: absolute; top: -4px; color: #94a3b8; font-size: 24px; letter-spacing: 8px; opacity: .7; }
+    .particle-model { position: absolute; left: 10px; right: 10px; top: 12px; height: 98px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .particle-model span { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; box-shadow: 0 0 8px rgba(148,163,184,.75); animation: particleFloat var(--particle-speed, 5.5s) ease-in-out infinite alternate; }
+    .particle-model span:nth-child(1) { left: 4px; top: 76px; animation: pA var(--particle-speed, 5.5s) ease-in-out infinite alternate; }
+    .particle-model span:nth-child(2) { left: 30px; top: 42px; animation: pB var(--particle-speed, 5.5s) ease-in-out infinite alternate; animation-delay: -1.4s; }
+    .particle-model span:nth-child(3) { left: 58px; top: 70px; animation: pC var(--particle-speed, 5.5s) ease-in-out infinite alternate; }
+    .particle-model span:nth-child(4) { left: 18px; top: 18px; animation: pB var(--particle-speed, 5.5s) ease-in-out infinite alternate; animation-delay: -2.1s; }
+    .particle-model span:nth-child(5) { left: 70px; top: 32px; animation: pA var(--particle-speed, 5.5s) ease-in-out infinite alternate; animation-delay: -2.6s; }
+    @keyframes pA { 0%{transform:translate(-16px,10px)}50%{transform:translate(12px,-14px)}100%{transform:translate(-12px,8px)} }
+    @keyframes pB { 0%{transform:translate(14px,-10px)}50%{transform:translate(-18px,16px)}100%{transform:translate(16px,8px)} }
+    @keyframes pC { 0%{transform:translate(-8px,18px)}50%{transform:translate(18px,-12px)}100%{transform:translate(-4px,26px)} }
+    .dash-table th, .dash-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    .dash-table th { background: #f1f5f9; font-weight: 700; position: sticky; top: 0; }
+    .dash-table tr:hover td { background: #f8fafc; }
+  </style>
+  <script src="/_sdk/9432170dbd2ae0df.resizing_sdk.js" type="text/javascript" integrity="sha512-FeT+58sb1f9ejWPWFjCbJvTT+SDwGV+ngrHUnlO7TWEOoqwOLj6p256kO3vOL7DIWl1cIgrobiof8v2bOigwPg=="></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen p-5 flex flex-col items-center">
+  <!-- Entry Screen -->
+  <section id="entryScreen" data-template-id="entry-screen" class="canva-section w-full max-w-md bg-white rounded-2xl shadow-lg p-7 my-auto">
+   <div class="text-center mb-6">
+    <div class="text-4xl mb-3" aria-hidden="true">
+     🧪
+    </div>
+    <h1 data-template-id="entry-title" class="canva-text font-bold mb-2"></h1>
+    <p data-template-id="entry-description" class="canva-text text-gray-600"></p>
+   </div>
+   <form id="entryForm" class="space-y-4">
+    <div>
+     <label data-template-id="student-number-label" class="canva-text font-bold mb-1 block" for="studentNumber"></label> <input id="studentNumber" type="text" inputmode="numeric" autocomplete="off" required class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    </div>
+    <div>
+     <label data-template-id="student-name-label" class="canva-text font-bold mb-1 block" for="studentName"></label> <input id="studentName" type="text" autocomplete="name" required class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    </div><button data-template-id="enter-button" type="submit" class="canva-button w-full py-3 rounded-lg font-medium text-lg transition"></button>
+    <p id="entry-feedback" class="text-red-600 text-sm text-center min-h-5" aria-live="polite"></p>
+   </form>
+   <div class="mt-4 text-center">
+    <button data-template-id="teacher-mode-button" type="button" class="canva-button text-sm px-4 py-2 rounded-lg" onclick="requestTeacherAccess()"></button>
+   </div>
+  </section>
+  <div id="teacherAccessModal" class="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-5 hidden" role="dialog" aria-modal="true" aria-labelledby="teacher-access-title">
+   <form id="teacherAccessForm" data-template-id="teacher-access-panel" class="canva-card w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+    <h2 data-template-id="teacher-access-title" class="canva-text text-xl font-bold mb-2"></h2>
+    <p data-template-id="teacher-access-description" class="canva-text text-sm text-slate-600 mb-4"></p><label data-template-id="teacher-access-label" class="canva-text font-bold mb-1 block" for="teacherAccessCode"></label> <input id="teacherAccessCode" type="text" inputmode="numeric" autocomplete="off" maxlength="6" required class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <p id="teacher-access-feedback" class="text-red-600 text-sm min-h-5 mt-2" aria-live="polite"></p>
+    <div class="flex gap-2 mt-3">
+     <button data-template-id="teacher-access-cancel" type="button" class="canva-button flex-1 py-2 rounded-lg" onclick="closeTeacherAccess()"></button> <button data-template-id="teacher-access-submit" type="submit" class="canva-button flex-1 py-2 rounded-lg"></button>
+    </div>
+   </form>
+  </div><!-- App Screen -->
+  <main id="appScreen" class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 hidden">
+   <h1 data-template-id="page-title" class="canva-text text-center font-bold mb-4"></h1>
+   <div class="text-center mb-5">
+    <button data-template-id="start-button" id="startBtn" class="canva-button px-6 py-3 text-lg rounded-lg font-medium transition" onclick="startSimulation()"></button>
+   </div>
+   <div class="flex flex-col md:flex-row gap-5 mb-6">
+    <div data-template-id="visual-box" class="canva-card flex-1 rounded-xl p-5 text-center border-2 border-blue-200">
+     <div id="statusText" class="font-bold text-gray-600 mb-1">
+      얼음 (고체)
+     </div>
+     <div class="lab-setup" aria-label="핫플레이트 위의 비커">
+      <div class="steam" aria-hidden="true">
+       ⌁⌁
+      </div>
+      <div class="beaker">
+       <div class="ice-inside" id="iceInside" aria-hidden="true"><span>🧊</span><span>🧊</span><span>🧊</span>
+       </div>
+       <div class="liquid" id="liquidLevel"></div>
+       <div class="particle-model" id="particleModel"><span></span><span></span><span></span><span></span><span></span>
+       </div>
+      </div>
+      <div class="hotplate" id="hotplate" aria-hidden="true"></div>
+     </div>
+     <div class="text-sm text-gray-500">
+      현재 온도
+     </div>
+     <div class="text-3xl font-bold text-red-500 mt-1"><span id="tempValue">-20</span>°C
+     </div>
+    </div>
+    <div class="flex-[1.5] border border-gray-200 rounded-xl p-3">
+     <canvas id="graphCanvas"></canvas>
+    </div>
+   </div>
+   <div data-template-id="quiz-box" class="canva-card rounded-xl p-5 border-2">
+    <div data-template-id="quiz-title" class="canva-text font-bold text-lg mb-4"></div>
+    <div class="space-y-4 mb-4">
+     <div>
+      <label data-template-id="q1-label" class="canva-text font-bold mb-1 block" for="q1"></label> <input id="q1" type="text" class="w-full p-2 rounded border border-gray-300" placeholder="답을 서술해 보세요">
+     </div>
+     <div>
+      <label data-template-id="q2-label" class="canva-text font-bold mb-1 block" for="q2"></label> <input id="q2" type="text" class="w-full p-2 rounded border border-gray-300" placeholder="답을 서술해 보세요">
+     </div>
+     <div>
+      <label data-template-id="q3-label" class="canva-text font-bold mb-1 block" for="q3"></label> <input id="q3" type="text" class="w-full p-2 rounded border border-gray-300" placeholder="답을 서술해 보세요">
+     </div>
+    </div><button data-template-id="check-button" class="canva-button w-full py-3 rounded-lg font-medium text-lg" onclick="checkAnswers()"></button>
+    <div id="quiz-feedback" class="mt-4 font-bold text-center"></div>
+   </div>
+  </main><!-- Teacher Dashboard -->
+  <section id="dashboardScreen" class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 hidden">
+   <div class="flex items-center justify-between mb-5">
+    <h1 data-template-id="dashboard-title" class="canva-text font-bold"></h1><button data-template-id="back-button" type="button" class="canva-button px-4 py-2 rounded-lg text-sm" onclick="hideDashboard()"></button>
+   </div>
+   <div data-template-id="dashboard-stats" class="canva-card rounded-xl p-4 mb-5 flex gap-6 items-center">
+    <div class="text-center">
+     <div class="text-3xl font-bold text-blue-600" id="totalCount">
+      0
+     </div>
+     <div data-template-id="stats-total-label" class="canva-text text-sm text-gray-500"></div>
+    </div>
+   </div>
+   <div class="overflow-x-auto rounded-xl border border-gray-200" style="max-height: 480px; overflow-y: auto;">
+    <table class="dash-table w-full">
+     <thead>
+      <tr>
+       <th data-template-id="th-number" class="canva-text"></th>
+       <th data-template-id="th-name" class="canva-text"></th>
+       <th data-template-id="th-q1" class="canva-text"></th>
+       <th data-template-id="th-q2" class="canva-text"></th>
+       <th data-template-id="th-q3" class="canva-text"></th>
+       <th data-template-id="th-time" class="canva-text"></th>
+      </tr>
+     </thead>
+     <tbody id="dashboardBody"></tbody>
+    </table>
+   </div>
+   <p id="emptyDashboard" data-template-id="empty-dashboard" class="canva-text text-center py-8 text-gray-400 hidden"></p>
+  </section>
+  <script src="/_sdk/b7bbbe551ba4f8f5.editing_sdk.js" integrity="sha512-h06pMz6KcVo4Wjvoggb4sS5DZpb55bTriAzBmA0YwbkBA3z2ZXl8CBEbCWT+/fAsm0SwDejJ7jJHOZsLZKqPoQ=="></script>
+  <script>
+    let currentStudentNumber = '';
+    let currentStudentName = '';
+    let allRecords = [];
+
+    // Data SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        allRecords = data;
+        renderDashboard();
+      }
+    };
+
+    (async () => {
+      const res = await window.dataSdk.init(dataHandler);
+      if (!res.isOk) console.error('Data SDK init failed');
+    })();
+
+    function renderDashboard() {
+      const tbody = document.getElementById('dashboardBody');
+      const empty = document.getElementById('emptyDashboard');
+      document.getElementById('totalCount').textContent = allRecords.length;
+
+      if (!allRecords.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      const sorted = [...allRecords].sort((a, b) => (a.student_number || '').localeCompare(b.student_number || '', 'ko'));
+      const fragment = document.createDocumentFragment();
+      sorted.forEach(r => {
+        const tr = document.createElement('tr');
+        const time = r.submitted_at ? new Date(r.submitted_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        tr.innerHTML = `<td>${esc(r.student_number)}</td><td>${esc(r.student_name)}</td><td>${esc(r.answer_1)}</td><td>${esc(r.answer_2)}</td><td>${esc(r.answer_3)}</td><td class="text-gray-400 text-xs">${time}</td>`;
+        fragment.appendChild(tr);
+      });
+      tbody.innerHTML = '';
+      tbody.appendChild(fragment);
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    const TEACHER_ACCESS_CODE = '0406';
+
+    function requestTeacherAccess() {
+      document.getElementById('teacherAccessModal').classList.remove('hidden');
+      document.getElementById('teacherAccessCode').focus();
+    }
+
+    function closeTeacherAccess() {
+      document.getElementById('teacherAccessModal').classList.add('hidden');
+      document.getElementById('teacherAccessForm').reset();
+      document.getElementById('teacher-access-feedback').textContent = '';
+    }
+
+    document.getElementById('teacherAccessForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const feedback = document.getElementById('teacher-access-feedback');
+      if (document.getElementById('teacherAccessCode').value.trim() !== TEACHER_ACCESS_CODE) {
+        feedback.textContent = '접근 코드가 올바르지 않습니다.';
+        document.getElementById('teacherAccessCode').select();
+        return;
+      }
+      closeTeacherAccess();
+      showDashboard();
+    });
+
+    function showDashboard() {
+      document.getElementById('entryScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('dashboardScreen').classList.remove('hidden');
+      renderDashboard();
+    }
+
+    function hideDashboard() {
+      document.getElementById('dashboardScreen').classList.add('hidden');
+      document.getElementById('entryScreen').classList.remove('hidden');
+    }
+
+    // Entry form
+    const entryForm = document.getElementById('entryForm');
+    entryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const num = document.getElementById('studentNumber').value.trim();
+      const name = document.getElementById('studentName').value.trim();
+      if (!num || !name) { document.getElementById('entry-feedback').textContent = '학번과 이름을 모두 입력해주세요.'; return; }
+      currentStudentNumber = num;
+      currentStudentName = name;
+      document.getElementById('entry-feedback').textContent = '';
+      document.getElementById('entryScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+      requestAnimationFrame(resize);
+    });
+
+    // Graph
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    const paddingX = 40, paddingY = 30;
+    let time = 0, temperature = -20, timer, dataPoints = [];
+
+    function resize() { width = canvas.width = canvas.parentElement.clientWidth; height = canvas.height = 250; drawGraph(); }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function mapX(t) { return paddingX + (t / 150) * (width - paddingX - 20); }
+    function mapY(temp) { return height - paddingY - ((temp + 30) / 160) * (height - paddingY - 20); }
+
+    function drawAxes() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.beginPath(); ctx.moveTo(paddingX, 10); ctx.lineTo(paddingX, height - paddingY); ctx.lineTo(width - 10, height - paddingY);
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#666'; ctx.font = '12px Noto Sans KR';
+      ctx.fillText('온도(°C)', 0, 15); ctx.fillText('시간', width - 30, height - 10);
+      const y0 = mapY(0), y100 = mapY(100);
+      ctx.strokeStyle = '#ddd'; ctx.setLineDash([5, 5]); ctx.beginPath();
+      ctx.moveTo(paddingX, y0); ctx.lineTo(width - 10, y0);
+      ctx.moveTo(paddingX, y100); ctx.lineTo(width - 10, y100); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillText('0', 22, y0 + 4); ctx.fillText('100', 12, y100 + 4);
+    }
+
+    function drawGraph() {
+      drawAxes();
+      if (!dataPoints.length) return;
+      ctx.beginPath(); ctx.moveTo(mapX(dataPoints[0].x), mapY(dataPoints[0].y));
+      for (let i = 1; i < dataPoints.length; i++) ctx.lineTo(mapX(dataPoints[i].x), mapY(dataPoints[i].y));
+      ctx.strokeStyle = '#d9534f'; ctx.lineWidth = 3; ctx.stroke();
+      const last = dataPoints[dataPoints.length - 1];
+      ctx.beginPath(); ctx.arc(mapX(last.x), mapY(last.y), 5, 0, Math.PI * 2); ctx.fillStyle = '#0275d8'; ctx.fill();
+    }
+
+    function updateVisuals(temp) {
+      document.getElementById('tempValue').innerText = Math.round(temp);
+      const iceInside = document.getElementById('iceInside');
+      const iceScale = time < 20 ? 1 : time < 50 ? 1 - ((time - 20) / 30) * 0.72 : 0.28;
+      iceInside.style.transform = `scale(${iceScale})`;
+      iceInside.style.opacity = time < 50 && time < 150 ? '1' : '0';
+      const liquid = document.getElementById('liquidLevel');
+      // 융해 구간에는 물이 늘고, 기화 구간에는 물이 점점 줄어 완전히 사라진다.
+      const lh = time < 20 ? 0 : time < 50 ? ((time - 20) / 30) * 50 : time < 90 ? 50 : time < 150 ? 50 - ((time - 90) / 60) * 50 : 0;
+      liquid.style.height = `${lh}%`;
+      liquid.style.opacity = time >= 20 && time < 150 && lh > 0 ? '1' : '0';
+      const particleModel = document.getElementById('particleModel');
+      const status = document.getElementById('statusText');
+      // 100°C를 넘으면 온도에 비례해 수증기 입자의 애니메이션 주기를 줄인다.
+      const particleSpeed = Math.max(1.8, 5.5 - Math.max(0, temp - 100) * 0.12);
+      particleModel.style.setProperty('--particle-speed', `${particleSpeed}s`);
+      particleModel.style.opacity = time >= 90 && time < 150 ? '1' : '0';
+      if (time < 20) status.innerText = '얼음 (고체)';
+      else if (time < 50) status.innerText = '얼음 + 물 (융해 중)';
+      else if (time < 90) status.innerText = '물 (액체)';
+      else if (time < 130) status.innerText = '물 + 수증기 (기화 중)';
+      else status.innerText = '수증기 (기체)';
+    }
+
+    function startSimulation() {
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('hotplate').classList.remove('off');
+      time = 0; temperature = -20; dataPoints = [];
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        time++;
+        if (time <= 20) temperature = -20 + time;
+        else if (time <= 50) temperature = 0;
+        else if (time <= 90) temperature = (time - 50) * 2.5;
+        else if (time <= 130) temperature = 100;
+        else if (time <= 150) temperature = 100 + (time - 130);
+        dataPoints.push({ x: time, y: temperature });
+        drawGraph(); updateVisuals(temperature);
+        if (time >= 150) { clearInterval(timer); document.getElementById('hotplate').classList.add('off'); document.getElementById('startBtn').disabled = false; }
+      }, 150);
+    }
+
+    async function checkAnswers() {
+      const q1 = document.getElementById('q1').value.trim();
+      const q2 = document.getElementById('q2').value.trim();
+      const q3 = document.getElementById('q3').value.trim();
+      const fb = document.getElementById('quiz-feedback');
+      if (!q1 || !q2 || !q3) { fb.style.color = 'red'; fb.innerText = '모든 퀴즈의 답을 입력해주세요!'; return; }
+
+      const btn = document.querySelector('[data-template-id="check-button"]');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+
+      const res = await window.dataSdk.create({
+        student_number: currentStudentNumber,
+        student_name: currentStudentName,
+        answer_1: q1,
+        answer_2: q2,
+        answer_3: q3,
+        submitted_at: new Date().toISOString()
+      });
+
+      btn.disabled = false;
+      btn.style.opacity = '1';
+
+      if (res.isOk) {
+        // Score locally
+        let score = 0;
+        const n = v => v.replace(/\s/g, '').toLowerCase();
+        if (n(q1).includes('일정') || n(q1).includes('유지')) score++;
+        if (n(q2).includes('상태변화') || n(q2).includes('상태')) score++;
+        if ((n(q3).includes('액체') && n(q3).includes('기체')) || n(q3).includes('기화') || n(q3).includes('증발')) score++;
+        if (score === 3) { fb.style.color = '#16a34a'; fb.innerText = '🎉 완벽해요! 제출 완료!'; }
+        else { fb.style.color = '#d9534f'; fb.innerText = `🤔 3문제 중 ${score}문제 맞혔습니다. 제출 완료!`; }
+      } else {
+        fb.style.color = 'red'; fb.innerText = '제출에 실패했습니다. 다시 시도해주세요.';
+      }
+    }
+
+    lucide.createIcons();
+  </script>
+ </body>
+</html>
