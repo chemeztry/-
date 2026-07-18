@@ -75,7 +75,9 @@
    </form>
   </div><!-- App Screen -->
   <main id="appScreen" class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 hidden">
-   <h1 data-template-id="page-title" class="canva-text text-center font-bold mb-4"></h1>
+   <div class="flex items-center justify-between gap-3 mb-4">
+    <h1 data-template-id="page-title" class="canva-text text-center font-bold flex-1"></h1><button data-template-id="student-home-button" type="button" class="canva-button px-3 py-2 rounded-lg text-sm whitespace-nowrap" onclick="goStudentHome()"></button>
+   </div>
    <div class="text-center mb-5">
     <button data-template-id="start-button" id="startBtn" class="canva-button px-6 py-3 text-lg rounded-lg font-medium transition" onclick="startSimulation()"></button>
    </div>
@@ -234,6 +236,14 @@
       document.getElementById('entryScreen').classList.remove('hidden');
     }
 
+    function goStudentHome() {
+      if (timer) clearInterval(timer);
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('entryScreen').classList.remove('hidden');
+      document.getElementById('entryForm').reset();
+      document.getElementById('quiz-feedback').textContent = '';
+    }
+
     // Entry form
     const entryForm = document.getElementById('entryForm');
     entryForm.addEventListener('submit', (e) => {
@@ -293,10 +303,10 @@
       iceInside.style.transform = `scale(${iceScale})`;
       iceInside.style.opacity = time < 50 && time < 150 ? '1' : '0';
       const liquid = document.getElementById('liquidLevel');
-      // 융해 구간에는 물이 늘고, 기화 구간에는 물이 점점 줄어 완전히 사라진다.
-      const lh = time < 20 ? 0 : time < 50 ? ((time - 20) / 30) * 50 : time < 90 ? 50 : time < 150 ? 50 - ((time - 90) / 60) * 50 : 0;
+      // 융해 구간에는 물이 늘고, 100°C에 도달하는 기화 구간에는 물이 모두 사라진다.
+      const lh = time < 20 ? 0 : time < 50 ? ((time - 20) / 30) * 50 : time < 90 ? 50 : time < 130 ? 50 - ((time - 90) / 40) * 50 : 0;
       liquid.style.height = `${lh}%`;
-      liquid.style.opacity = time >= 20 && time < 150 && lh > 0 ? '1' : '0';
+      liquid.style.opacity = time >= 20 && time < 130 && lh > 0 ? '1' : '0';
       const particleModel = document.getElementById('particleModel');
       const status = document.getElementById('statusText');
       // 100°C를 넘으면 온도에 비례해 수증기 입자의 애니메이션 주기를 줄인다.
